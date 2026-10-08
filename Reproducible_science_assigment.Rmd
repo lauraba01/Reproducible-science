@@ -2,7 +2,7 @@
 title: "Reproducible Science Assigment"
 author: "Laura Barria"
 date: "08/10/2026"
-output:
+output: 
   html_document:
     df_print: paged
 ---
