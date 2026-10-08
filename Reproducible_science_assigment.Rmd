@@ -1,0 +1,120 @@
+---
+title: "Reproducible Science Assigment"
+author: "Laura Barria"
+date: "08/10/2026"
+output:
+  html_document:
+    df_print: paged
+---
+I will use the data from a study on kinematics of wing beats in flying swallows. I will analyse the relationship between air speed and wing beat amplitude using linear regression. The data is from a study done by Kristy Park and her colleagues in 2001.
+
+```{r}
+#libraries####
+library(performance)
+library(tidyverse)
+library(see)
+
+
+df_park <- read_csv("Parketal2001WBK-2.csv")
+```
+check for entry mistakes in the data
+
+```{r}
+ggplot(aes(x=Airspeed), data= df_park)+
+  geom_histogram()
+```
+
+```{r}
+ggplot(aes(x=Wingbeat_Amp), data = df_park)+
+  geom_histogram()
+```
+```{r}
+df_park |> 
+  filter(Bird_ID == 1) |> 
+  ggplot(aes(x=Airspeed, y=Wingbeat_Amp)) +
+  geom_point()+
+  theme_bw()
+```
+```{r}
+df_park |> 
+  filter(Bird_ID == 1) |> 
+  ggplot(aes(x=Airspeed, y=Wingbeat_Amp)) +
+  geom_point()+
+  xlim(0,14) +
+  ylim(40,130)+
+  theme_bw() 
+```
+only analyze one of the two birds
+
+```{r}
+df_bird1 <- df_park |> 
+  filter(Bird_ID ==1)
+```
+
+regression analysis on Bird ID 1
+
+```{r}
+lm_wba_1 <- lm(Wingbeat_Amp ~ Airspeed,
+               data= df_bird1)
+str(lm_wba_1)
+```
+check the model
+
+```{r}
+check_model(lm_wba_1)
+```
+check the summary of the model 
+```{r}
+summary(lm_wba_1)
+
+```
+check the confidence interval
+
+```{r}
+
+confint(lm_wba_1)
+```
+from the analysis done it is shown  that with higher wind velocity, the wingbeat amplification increases (Wing aplitude= b = 5.03 ± 0.306, t=16.44, p= 5.08e-08 )
+
+
+update the model with only a subset of data
+
+```{r}
+lm_wba_2 <- update(lm_wba_1, data=df_bird1[-1,])
+summary(lm_wba_1)
+summary(lm_wba_2)
+```
+```{r}
+lm_wba_3 <- update(lm_wba_1, data=df_bird1[-11,])
+summary(lm_wba_1)
+summary(lm_wba_2)
+summary(lm_wba_3)
+```
+predict the response variable over a certain range
+
+```{r}
+df_newbird <-
+  tibble(Airspeed=seq(min(df_bird1$Airspeed), #minimum of the range
+         max(df_bird1$Airspeed), #max of the range,
+         length=100)) #this tells R how many values to generate
+df_pred <- predict(lm_wba_1,
+                   newdata=df_newbird,
+                   int ="c")
+df_newbirds_pred <- bind_cols(df_newbird, as_tibble(df_pred))
+```
+
+plotting with ggplot2
+
+```{r}
+ggplot(df_newbirds_pred) +
+  (aes(x=Airspeed, y=fit)) +
+  geom_line()+
+  geom_point(data= df_bird1,aes(x=Airspeed,y=Wingbeat_Amp))+
+  geom_ribbon(aes(ymin=lwr,
+                  ymax=upr),
+              alpha=0.25) +
+  labs(x= "Airspeed (m/s)",
+       y=expression("Wingbeat Amplitude(°)"))+
+  theme_bw()
+```
+
